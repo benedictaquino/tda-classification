@@ -1,15 +1,19 @@
+import os
+import sys
 import struct
 import numpy as np
 
-def read(data="train"):
+def read(data : str = "train") -> (np.array, np.array):
     '''
     This function reads the MNIST training or testing dataset ubyte file to a 
     numpy array
 
-    RETURNS
+    Parameters
+    ----------
+    data : string designating train or test data sets 
+    Returns
     -------
-    labels, images : {(np.array, np.array)} 
-        - A tuple of numpy arrays containing the training data
+    labels, images : a tuple of numpy arrays containing the training data
     '''
 
     if data == "train":
@@ -32,6 +36,22 @@ def read(data="train"):
     return images, labels
 
 if __name__ == "__main__":
-    # Load training and test data to numpy arrays
-    train_labels, train_images = read("train")
-    test_labels, test_images = read("test")
+    try:
+        # Load training and test data to numpy arrays
+        train_labels, train_images = read("train")
+        test_labels, test_images = read("test")
+    except FileNotFoundError: # change directory to base directory
+        filepath = os.path.abspath(__file__)
+        dname = os.path.abspath(os.curdir)
+        os.chdir(
+                os.path.abspath(
+                    os.path.join(
+                        filepath,
+                        os.path.pardir,
+                        os.path.pardir
+                        )))
+
+        train_labels, train_images = read("train")
+        test_labels, test_images = read("test")
+
+        os.chdir(dname) # change back to current directory
