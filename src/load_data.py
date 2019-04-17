@@ -38,8 +38,8 @@ def read(data : str = "train") -> (np.array, np.array):
 if __name__ == "__main__":
     try:
         # Load training and test data to numpy arrays
-        train_labels, train_images = read("train")
-        test_labels, test_images = read("test")
+        train_images, train_labels  = read("train")
+        test_images, test_labels = read("test")
     except FileNotFoundError: # change directory to base directory
         filepath = os.path.abspath(__file__)
         dname = os.path.abspath(os.curdir)
