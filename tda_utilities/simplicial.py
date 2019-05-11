@@ -5,10 +5,11 @@ from itertools import combinations
 
 class Simplex:
     """Defines a k-simplex object"""
-    def __init__(self, *points, orientation: int = None):
+    def __init__(self, *points):
         """Simplex takes arguments as points that can make up a k-simplex"""
         self.k = len(set(points)) - 1  # k-simplex
-        self.orientation = orientation
+        if self.k < 0:
+            raise ValueError('Simplex requires at least one point')
         self.points = tuple(set(points))
 
     def __len__(self) -> int:
@@ -32,7 +33,7 @@ class Simplex:
     def __hash__(self) -> int:
         return hash(self.points)
 
-    def faces(self, index: int = None) -> tuple:
+    def faces(self) -> tuple:
         if not self:
             return None
         return tuple([Simplex(*combo)
@@ -45,9 +46,9 @@ class Simplex:
 
 class SimplicialComplex:
     """Defines a simplicial complex"""
-    def __init__(self, simplices: list):
+    def __init__(self, *simplices):
         # -> set to remove duplicates -> back to list
-        self.simplices = list(simplices)
+        self.simplices = list(set(simplices))
         self._build_complex()
         self.simplices.sort()  # puts lower-dimensional simplices first
         self.k = len(max(self.simplices))  # largest dimension simplex
@@ -72,35 +73,31 @@ class SimplicialComplex:
     def __repr__(self):
         return f'simplicial {self.k}-complex'
 
-    def closure(self, simplices: list) -> SimplicialComplex:
+    def closure(self, *simplices) -> SimplicialComplex:
         """return the closure of the subset of simplices in a k-complex"""
-        try:
-            return closure(self, simplices)
-        except AttributeError:
-            raise TypeError('Pass in list of objects with type Simplex')
+        simplices = list(set(simplices))
+        for simplex in simplices:
+            if simplex not in self:
+                raise ValueError('not a subset of the complex')
+            elif simplex:
+                for face in simplex.faces():
+                    if face not in simplices:
+                        simplices.append(face)
+
+        return SimplicialComplex(*simplices)
 
     def chain(self, k):
         """returns the k-chain"""
         raise NotImplementedError
 
 
-def closure(k_complex: SimplicialComplex,
-            simplices: list) -> SimplicialComplex:
-    """return the closure of the subset of simplices in a k-complex"""
-    for simplex in simplices:
-        if simplex:
-            for face in simplex.faces():
-                if face not in simplices:
-                    simplices.append(face)
-    return SimplicialComplex(simplices)
-
-
 class SimplicialChain:
     """Defines a simplicial k-chain"""
     def __init__(self, complex: SimplicialComplex, orientation: int = 0):
         # TODO: ???
+        raise NotImplementedError
         self.chain = None
-        self.orienation = orientation
+        self.orientation = orientation
 
     def boundary(self):
         """returns a (k-1)-Chain"""
