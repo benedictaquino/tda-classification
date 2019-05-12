@@ -15,6 +15,17 @@ class Simplex:
     def __init__(self, *points):
         """Simplex takes arguments as points that can make up a k-simplex"""
         self.__points = frozenset(points)
+        self.__k = len(self.points) - 1
+        if self:
+            combos = combinations(self.points, self.k)
+            self.__boundary = {Simplex(*combo) for combo in combos}
+            self.__interior = set()
+            for k in range(1, self.k):
+                combos = combinations(self.points, k)
+                self.__interior |= {Simplex(*combo) for combo in combos}
+        else:
+            self.__boundary = None
+            self.__interior = None
 
     @property
     def points(self) -> frozenset:
@@ -24,26 +35,17 @@ class Simplex:
     @property
     def k(self) -> int:
         """dimension of the simplex"""
-        return len(self.points) - 1
+        return self.__k
 
     @property
     def boundary(self) -> set:
-        """returns the union of faces of the simplex"""
-        if not self:
-            return None
-        combos = combinations(self.points, self.k)
-        return {Simplex(*combo) for combo in combos}
+        """the union of faces of the simplex"""
+        return self.__boundary
 
     @property
     def interior(self) -> set:
-        """returns the complement of the boundary"""
-        if not self:
-            return None
-        subset = set()
-        for k in range(1, self.k):
-            combos = combinations(self.points, k)
-            subset |= {Simplex(*combo) for combo in combos}
-        return subset
+        """the complement of the boundary"""
+        return self.__interior
 
     def __len__(self) -> int:
         return self.k
@@ -93,7 +95,6 @@ class SimplicialComplex:
                 euler_number -= self.k_counter[k]
 
         self.__euler_number = euler_number
-        self.__orientable = False
 
     @property
     def simplices(self):
