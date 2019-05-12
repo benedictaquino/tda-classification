@@ -39,9 +39,6 @@ class Simplex:
         return f'{self.k}-simplex: '\
             + ' '.join(str(point) for point in self.points)
 
-    def __lt__(self, other) -> bool:
-        return len(self) < len(other)
-
     def __eq__(self, other) -> bool:
         if type(other) == self.__class__:
             return self.points == other.points
@@ -79,9 +76,6 @@ class SimplicialComplex:
     def __len__(self) -> int:
         return self.k
 
-    def __lt__(self, other):
-        return len(self) < len(other)
-
     def __repr__(self):
         return f'simplicial {self.k}-complex'
 
@@ -93,20 +87,10 @@ class SimplicialComplex:
 
     def closure(self, *simplices) -> SimplicialComplex:
         """return the closure of the subset of simplices in a k-complex"""
-        subset = set(simplices)
+        if not set(simplices).issubset(self.simplices):
+            raise ValueError('not a subset of the complex')
 
-        for simplex in simplices:
-            if simplex not in self:
-                raise ValueError('not a subset of the complex')
-            try:
-                subset |= simplex.faces
-            except TypeError as error_message:
-                if str(error_message) in NONE_ERROR_MESSAGES:
-                    pass
-                else:
-                    raise TypeError(error_message)
-
-        return SimplicialComplex(*subset)
+        return SimplicialComplex(*simplices)
 
     def star(self, *simplices) -> SimplicialComplex:
         """return the star of the set of simplices"""
