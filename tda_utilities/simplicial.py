@@ -1,6 +1,6 @@
 """Topological Feature Selection Functions"""
 from __future__ import annotations
-from itertools import combinations
+from itertools import combinations, product
 
 
 class Simplex:
@@ -76,6 +76,7 @@ class SimplicialComplex:
     def closure(self, *simplices) -> SimplicialComplex:
         """return the closure of the subset of simplices in a k-complex"""
         simplices = list(set(simplices))
+
         for simplex in simplices:
             if simplex not in self:
                 raise ValueError('not a subset of the complex')
@@ -85,6 +86,21 @@ class SimplicialComplex:
                         simplices.append(face)
 
         return SimplicialComplex(*simplices)
+
+    def star(self, *simplices) -> SimplicialComplex:
+        """return the star of the set of simplices"""
+        simplices = list(set(simplices))
+        star = list()
+
+        for simplex_1, simplex_2 in product(simplices, self.simplices):
+            if simplex_1 in self.closure(simplex_2):
+                star.append(simplex_2)
+
+        return star if star else None
+
+    def link(simplices: set) -> SimplicialComplex:
+        """return the link of the set of simplices"""
+        raise NotImplementedError
 
     def chain(self, k):
         """returns the k-chain"""
@@ -102,16 +118,6 @@ class SimplicialChain:
     def boundary(self):
         """returns a (k-1)-Chain"""
         raise NotImplementedError
-
-
-def star(simplices: set) -> SimplicialComplex:
-    """return the star of the set of simplices"""
-    raise NotImplementedError
-
-
-def link(simplices: set) -> SimplicialComplex:
-    """return the link of the set of simplices"""
-    raise NotImplementedError
 
 
 class Filtration:
