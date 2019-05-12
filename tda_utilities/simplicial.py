@@ -16,18 +16,21 @@ class Simplex:
 
     @property
     def points(self) -> frozenset:
+        """points of the simplex"""
         return self.__points
 
     @property
     def k(self) -> int:
+        """dimension of the simplex"""
         return len(self.points) - 1
 
     @property
     def faces(self) -> tuple:
+        """the faces of the simplex"""
         if not self:
             return None
-        return set([Simplex(*combo)
-                    for combo in combinations(self.points, self.k)])
+        combos = combinations(self.points, self.k)
+        return set([Simplex(*combo) for combo in combos])
 
     def __len__(self) -> int:
         return self.k
@@ -36,8 +39,8 @@ class Simplex:
         return other in self.points
 
     def __repr__(self):
-        return f'{self.k}-simplex: '\
-            + ' '.join(str(point) for point in self.points)
+        point_string = ' '.join(str(point) for point in self.points)
+        return f'{self.k}-simplex: ' + point_string
 
     def __eq__(self, other) -> bool:
         if type(other) == self.__class__:
@@ -80,25 +83,22 @@ class SimplicialComplex:
     def __iter__(self):
         return self.simplices.__iter__()
 
-    def __getitem__(self, i: int) -> Simplex:
-        return list(self.simplices)[i]
+    def __contains__(self, other) -> bool:
+        return other in self.simplices
 
     def closure(self, *simplices) -> SimplicialComplex:
         """return the closure of the subset of simplices in a k-complex"""
         if not set(simplices).issubset(self.simplices):
             raise ValueError('not a subset of the complex')
-
         return SimplicialComplex(*simplices)
 
     def star(self, *simplices) -> SimplicialComplex:
         """return the star of the set of simplices"""
         simplices = set(simplices)
         star = set()
-
         for simplex_1, simplex_2 in product(simplices, self.simplices):
             if simplex_1 in self.closure(simplex_2):
                 star.add(simplex_2)
-
         return star if star else None
 
     def link(self, *simplices) -> SimplicialComplex:
@@ -106,7 +106,6 @@ class SimplicialComplex:
         simplices = set(simplices)
         star = self.star(*simplices)
         closed_star = self.closure(*star).simplices
-
         return closed_star - star
 
     def chain(self, k):
