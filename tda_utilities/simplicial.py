@@ -2,9 +2,10 @@
 from __future__ import annotations
 from itertools import combinations, product
 
-NONE_ERROR_MESSAGES = (
+NONETYPE_ERROR_MESSAGES = (
     "unsupported operand type(s) for -: 'NoneType' and 'set'",
-    "unsupported operand type(s) for |=: 'set' and 'NoneType'"
+    "unsupported operand type(s) for |=: 'set' and 'NoneType'",
+    "unsupported operand type(s) for |: 'NoneType' and 'NoneType'"
 )
 
 
@@ -25,12 +26,23 @@ class Simplex:
         return len(self.points) - 1
 
     @property
-    def faces(self) -> tuple:
-        """the faces of the simplex"""
+    def boundary(self) -> set:
+        """returns the union of faces of the simplex"""
         if not self:
             return None
         combos = combinations(self.points, self.k)
-        return set([Simplex(*combo) for combo in combos])
+        return {Simplex(*combo) for combo in combos}
+
+    @property
+    def interior(self) -> set:
+        """returns the complement of the boundary"""
+        if not self:
+            return None
+        subset = set()
+        for k in range(1, self.k):
+            combos = combinations(self.points, k)
+            subset |= {Simplex(*combo) for combo in combos}
+        return subset
 
     def __len__(self) -> int:
         return self.k
@@ -47,6 +59,9 @@ class Simplex:
             return self.points == other.points
         return False
 
+    def __lt__(self, other) -> bool:
+        return len(self) < len(other)
+
     def __hash__(self) -> int:
         return hash(self.points)
 
@@ -55,16 +70,16 @@ class SimplicialComplex:
     """Defines a simplicial complex"""
     def __init__(self, *simplices):
         """adds all faces of simplices passed in to simplicial complex"""
-        simplex_list = list(simplices)
-        for simplex in simplex_list:
+        simplex_set = set(simplices)
+        for simplex in simplices:
             try:
-                simplex_list += list(simplex.faces - set(simplex_list))
+                simplex_set |= simplex.boundary | simplex.interior
             except TypeError as error_message:
-                if str(error_message) in NONE_ERROR_MESSAGES:
+                if str(error_message) in NONETYPE_ERROR_MESSAGES:
                     pass
                 else:
                     raise TypeError(error_message)
-        self.__simplices = set(simplex_list)
+        self.__simplices = simplex_set
 
     @property
     def simplices(self):
@@ -85,6 +100,9 @@ class SimplicialComplex:
 
     def __contains__(self, other) -> bool:
         return other in self.simplices
+
+    def __eq__(self, other) -> bool:
+        return self.simplices == other.simplices
 
     def closure(self, *simplices) -> SimplicialComplex:
         """return the closure of the subset of simplices in a k-complex"""
