@@ -52,18 +52,16 @@ class SimplicialComplex:
     """Defines a simplicial complex"""
     def __init__(self, *simplices):
         """adds all faces of simplices passed in to simplicial complex"""
-        simplex_set = set(simplices)
         simplex_list = list(simplices)
         for simplex in simplex_list:
             try:
-                simplex_list += list(simplex.faces - simplex_set)
-                simplex_set |= simplex.faces
+                simplex_list += list(simplex.faces - set(simplex_list))
             except TypeError as error_message:
                 if str(error_message) in NONE_ERROR_MESSAGES:
                     pass
                 else:
                     raise TypeError(error_message)
-        self.__simplices = simplex_set
+        self.__simplices = set(simplex_list)
 
     @property
     def simplices(self):
