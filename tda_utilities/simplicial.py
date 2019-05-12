@@ -12,10 +12,22 @@ class Simplex:
     """Defines a k-simplex object"""
     def __init__(self, *points):
         """Simplex takes arguments as points that can make up a k-simplex"""
-        self.points = frozenset(points)
-        self.k = len(self.points) - 1  # k-simplex
-        if self.k < 0:
-            raise ValueError('Simplex requires at least one point')
+        self.__points = frozenset(points)
+
+    @property
+    def points(self) -> frozenset:
+        return self.__points
+
+    @property
+    def k(self) -> int:
+        return len(self.points) - 1
+
+    @property
+    def faces(self) -> tuple:
+        if not self:
+            return None
+        return set([Simplex(*combo)
+                    for combo in combinations(self.points, self.k)])
 
     def __len__(self) -> int:
         return self.k
@@ -38,36 +50,31 @@ class Simplex:
     def __hash__(self) -> int:
         return hash(self.points)
 
-    def faces(self) -> tuple:
-        if not self:
-            return None
-        return set([Simplex(*combo)
-                    for combo in combinations(self.points, self.k)])
-
-    def orient(self, sigma: int):
-        """assigns an orientation to the simplex"""
-        self.orientation = sigma
-
 
 class SimplicialComplex:
     """Defines a simplicial complex"""
     def __init__(self, *simplices):
-        self.simplices = set(simplices)
-        self._build_complex()
-        self.k = len(max(self.simplices))  # largest dimension simplex
-
-    def _build_complex(self):
-        """add all faces of each simplex"""
-        simplex_list = list(self.simplices)
+        """adds all faces of simplices passed in to simplicial complex"""
+        simplex_set = set(simplices)
+        simplex_list = list(simplices)
         for simplex in simplex_list:
             try:
-                simplex_list += list(simplex.faces() - self.simplices)
-                self.simplices |= simplex.faces()
+                simplex_list += list(simplex.faces - simplex_set)
+                simplex_set |= simplex.faces
             except TypeError as error_message:
                 if str(error_message) in NONE_ERROR_MESSAGES:
                     pass
                 else:
                     raise TypeError(error_message)
+        self.__simplices = simplex_set
+
+    @property
+    def simplices(self):
+        return self.__simplices
+
+    @property
+    def k(self):
+        return len(max(self.simplices))  # largest dimension simplex
 
     def __len__(self) -> int:
         return self.k
@@ -92,7 +99,7 @@ class SimplicialComplex:
             if simplex not in self:
                 raise ValueError('not a subset of the complex')
             try:
-                subset |= simplex.faces()
+                subset |= simplex.faces
             except TypeError as error_message:
                 if str(error_message) in NONE_ERROR_MESSAGES:
                     pass
@@ -139,8 +146,7 @@ class SimplicialChain:
 
 
 class Filtration:
-    """Filtration object
-    """
+    """Filtration object"""
     # TODO: All of this I guess
     def __init__(self):
         raise NotImplementedError
