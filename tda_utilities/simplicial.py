@@ -2,21 +2,26 @@
 from __future__ import annotations
 from itertools import combinations, product
 
+NONE_ERROR_MESSAGES = (
+    "unsupported operand type(s) for -: 'NoneType' and 'set'",
+    "unsupported operand type(s) for |=: 'set' and 'NoneType'"
+)
+
 
 class Simplex:
     """Defines a k-simplex object"""
     def __init__(self, *points):
         """Simplex takes arguments as points that can make up a k-simplex"""
-        self.k = len(set(points)) - 1  # k-simplex
+        self.points = frozenset(points)
+        self.k = len(self.points) - 1  # k-simplex
         if self.k < 0:
             raise ValueError('Simplex requires at least one point')
-        self.points = tuple(set(points))
 
     def __len__(self) -> int:
         return self.k
 
-    def __getitem__(self, i: int) -> object:
-        return self.points[i]
+    def __contains__(self, other) -> object:
+        return other in self.points
 
     def __repr__(self):
         return f'{self.k}-simplex: '\
@@ -27,7 +32,7 @@ class Simplex:
 
     def __eq__(self, other) -> bool:
         if type(other) == self.__class__:
-            return set(self.points) == set(other.points)
+            return self.points == other.points
         return False
 
     def __hash__(self) -> int:
@@ -36,8 +41,8 @@ class Simplex:
     def faces(self) -> tuple:
         if not self:
             return None
-        return tuple([Simplex(*combo)
-                      for combo in combinations(set(self.points), self.k)])
+        return set([Simplex(*combo)
+                    for combo in combinations(self.points, self.k)])
 
     def orient(self, sigma: int):
         """assigns an orientation to the simplex"""
@@ -47,25 +52,25 @@ class Simplex:
 class SimplicialComplex:
     """Defines a simplicial complex"""
     def __init__(self, *simplices):
-        # -> set to remove duplicates -> back to list
-        self.simplices = list(set(simplices))
+        self.simplices = set(simplices)
         self._build_complex()
-        self.simplices.sort()  # puts lower-dimensional simplices first
         self.k = len(max(self.simplices))  # largest dimension simplex
 
     def _build_complex(self):
         """add all faces of each simplex"""
-        for simplex in self.simplices:
-            if simplex:
-                for face in simplex.faces():
-                    if face not in self.simplices:
-                        self.simplices.append(face)
+        simplex_list = list(self.simplices)
+        for simplex in simplex_list:
+            try:
+                simplex_list += list(simplex.faces() - self.simplices)
+                self.simplices |= simplex.faces()
+            except TypeError as error_message:
+                if str(error_message) in NONE_ERROR_MESSAGES:
+                    pass
+                else:
+                    raise TypeError(error_message)
 
     def __len__(self) -> int:
         return self.k
-
-    def __getitem__(self, i) -> Simplex:
-        return self.simplices[i]
 
     def __lt__(self, other):
         return len(self) < len(other)
@@ -73,34 +78,47 @@ class SimplicialComplex:
     def __repr__(self):
         return f'simplicial {self.k}-complex'
 
+    def __iter__(self):
+        return self.simplices.__iter__()
+
+    def __getitem__(self, i: int) -> Simplex:
+        return list(self.simplices)[i]
+
     def closure(self, *simplices) -> SimplicialComplex:
         """return the closure of the subset of simplices in a k-complex"""
-        simplices = list(set(simplices))
+        subset = set(simplices)
 
         for simplex in simplices:
             if simplex not in self:
                 raise ValueError('not a subset of the complex')
-            elif simplex:
-                for face in simplex.faces():
-                    if face not in simplices:
-                        simplices.append(face)
+            try:
+                subset |= simplex.faces()
+            except TypeError as error_message:
+                if str(error_message) in NONE_ERROR_MESSAGES:
+                    pass
+                else:
+                    raise TypeError(error_message)
 
-        return SimplicialComplex(*simplices)
+        return SimplicialComplex(*subset)
 
     def star(self, *simplices) -> SimplicialComplex:
         """return the star of the set of simplices"""
-        simplices = list(set(simplices))
-        star = list()
+        simplices = set(simplices)
+        star = set()
 
         for simplex_1, simplex_2 in product(simplices, self.simplices):
             if simplex_1 in self.closure(simplex_2):
-                star.append(simplex_2)
+                star.add(simplex_2)
 
         return star if star else None
 
-    def link(simplices: set) -> SimplicialComplex:
+    def link(self, *simplices) -> SimplicialComplex:
         """return the link of the set of simplices"""
-        raise NotImplementedError
+        simplices = set(simplices)
+        star = self.star(*simplices)
+        closed_star = self.closure(*star).simplices
+
+        return closed_star - star
 
     def chain(self, k):
         """returns the k-chain"""
