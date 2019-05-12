@@ -1,6 +1,7 @@
 """Topological Feature Selection Functions"""
 from __future__ import annotations
 from itertools import combinations, product
+from collections import Counter
 
 NONETYPE_ERROR_MESSAGES = (
     "unsupported operand type(s) for -: 'NoneType' and 'set'",
@@ -79,15 +80,40 @@ class SimplicialComplex:
                     pass
                 else:
                     raise TypeError(error_message)
+
         self.__simplices = simplex_set
+        self.__k = len(max(simplices))
+        self.__k_counter = Counter([simplex.k for simplex in self.simplices])
+
+        euler_number = self.k_counter[0]
+        for k in range(1, self.k + 1):
+            if k % 2 == 0:
+                euler_number += self.k_counter[k]
+            else:
+                euler_number -= self.k_counter[k]
+
+        self.__euler_number = euler_number
+        self.__orientable = False
 
     @property
     def simplices(self):
+        """simplices in the complex"""
         return self.__simplices
 
     @property
     def k(self):
-        return len(max(self.simplices))  # largest dimension simplex
+        """dimension of the complex"""
+        return self.__k
+
+    @property
+    def k_counter(self):
+        """Counter holding the counts of the number of k-simplices"""
+        return self.__k_counter
+
+    @property
+    def euler_number(self) -> int:
+        """the Euler number of the complex"""
+        return self.__euler_number
 
     def __len__(self) -> int:
         return self.k
@@ -125,10 +151,6 @@ class SimplicialComplex:
         star = self.star(*simplices)
         closed_star = self.closure(*star).simplices
         return closed_star - star
-
-    def chain(self, k):
-        """returns the k-chain"""
-        raise NotImplementedError
 
 
 class SimplicialChain:
