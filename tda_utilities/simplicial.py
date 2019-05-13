@@ -84,6 +84,7 @@ class SimplicialComplex:
                     raise TypeError(error_message)
 
         self.__simplices = simplex_set
+        self.__points = {pt for simplex in simplices for pt in simplex.points}
         self.__k = len(max(simplices))
         self.__k_counter = Counter([simplex.k for simplex in self.simplices])
 
@@ -97,17 +98,22 @@ class SimplicialComplex:
         self.__euler_number = euler_number
 
     @property
-    def simplices(self):
+    def simplices(self) -> set:
         """simplices in the complex"""
         return self.__simplices
 
     @property
-    def k(self):
+    def points(self) -> set:
+        """the points in the complex"""
+        return self.__points
+
+    @property
+    def k(self) -> int:
         """dimension of the complex"""
         return self.__k
 
     @property
-    def k_counter(self):
+    def k_counter(self) -> Counter:
         """Counter holding the counts of the number of k-simplices"""
         return self.__k_counter
 
@@ -117,12 +123,12 @@ class SimplicialComplex:
         return self.__euler_number
 
     def __len__(self) -> int:
-        return self.k
+        return len(self.simplices)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f'simplicial {self.k}-complex'
 
-    def __iter__(self):
+    def __iter__(self) -> iter:
         return self.simplices.__iter__()
 
     def __contains__(self, other) -> bool:
@@ -139,19 +145,23 @@ class SimplicialComplex:
 
     def star(self, *simplices) -> SimplicialComplex:
         """return the star of the set of simplices"""
-        simplices = set(simplices)
+        simplex_set = set(simplices)
         star = set()
-        for simplex_1, simplex_2 in product(simplices, self.simplices):
+        for simplex_1, simplex_2 in product(simplex_set, self.simplices):
             if simplex_1 in self.closure(simplex_2):
                 star.add(simplex_2)
         return star if star else None
 
     def link(self, *simplices) -> SimplicialComplex:
         """return the link of the set of simplices"""
-        simplices = set(simplices)
-        star = self.star(*simplices)
+        simplex_set = set(simplices)
+        star = self.star(*simplex_set)
         closed_star = self.closure(*star).simplices
         return closed_star - star
+
+    def issubcomplex(self, other: SimplicialComplex) -> bool:
+        """checks if the complex is a subcomplex of another complex"""
+        return self.simplices <= other.simplices
 
 
 class SimplicialChain:
