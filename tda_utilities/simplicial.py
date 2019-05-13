@@ -163,25 +163,28 @@ class SimplicialComplex:
         """checks if the complex is a subcomplex of another complex"""
         return self.simplices <= other.simplices
 
+    def subdivision(self) -> SimplicialComplex:
+        """returns the barycentric subdivision of the complex"""
+        raise NotImplementedError('method not finished')
+        pts = {sx: next(iter(sx.points)) for sx in self.simplices if sx.k == 0}
+        j_simplices = {sx for sx in self.simplices if sx.k >= self.k}
+        try:
+            next_pt = max(self.points) + 1
+        except ValueError as error_message:
+            if str(error_message) == 'max() arg is an empty sequence':
+                return self
+            raise ValueError(error_message)
+        simplices = {sx: pt for pt, sx in enumerate(j_simplices, next_pt)}
+        centers = {**pts, **simplices}
 
-class SimplicialChain:
-    """Defines a simplicial k-chain"""
-    def __init__(self, complex: SimplicialComplex, orientation: int = 0):
-        # TODO: ???
-        raise NotImplementedError
-        self.chain = None
-        self.orientation = orientation
+        simplex_set = set()
+        for j_sx, center in centers.items():
+            faces = j_sx.boundary
+            try:
+                simplex_set |= {Simplex(center, *face.points) for face in faces}
+            except TypeError as error_message:
+                if str(error_message) == "'NoneType' object is not iterable":
+                    continue
+                raise TypeError(error_message)
 
-    def boundary(self):
-        """returns a (k-1)-Chain"""
-        raise NotImplementedError
-
-
-class Filtration:
-    """Filtration object"""
-    # TODO: All of this I guess
-    def __init__(self):
-        raise NotImplementedError
-
-    def create_filtration(self):
-        raise NotImplementedError
+        return SimplicialComplex(*simplex_set) if simplex_set else self
