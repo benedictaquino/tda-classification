@@ -162,26 +162,3 @@ class SimplicialComplex:
     def issubcomplex(self, other: SimplicialComplex) -> bool:
         """checks if the complex is a subcomplex of another complex"""
         return self.simplices <= other.simplices
-
-
-class SimplicialChain:
-    """Defines a simplicial k-chain"""
-    def __init__(self, complex: SimplicialComplex, orientation: int = 0):
-        # TODO: ???
-        raise NotImplementedError
-        self.chain = None
-        self.orientation = orientation
-
-    def boundary(self):
-        """returns a (k-1)-Chain"""
-        raise NotImplementedError
-
-
-class Filtration:
-    """Filtration object"""
-    # TODO: All of this I guess
-    def __init__(self):
-        raise NotImplementedError
-
-    def create_filtration(self):
-        raise NotImplementedError
