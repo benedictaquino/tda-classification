@@ -5,7 +5,7 @@ with open('README.md', 'r') as f:
 
 setuptools.setup(
     name='tda-utilities',
-    version='0.1',
+    version='0.0.2',
     author='Benedict Aquino',
     author_email='benaq9@gmail.com',
     description='Computational Topology Utilities',
