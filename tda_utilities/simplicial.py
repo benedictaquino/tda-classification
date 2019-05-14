@@ -6,7 +6,8 @@ from collections import Counter
 NONETYPE_ERROR_MESSAGES = (
     "unsupported operand type(s) for -: 'NoneType' and 'set'",
     "unsupported operand type(s) for |=: 'set' and 'NoneType'",
-    "unsupported operand type(s) for |: 'NoneType' and 'NoneType'"
+    "unsupported operand type(s) for |: 'NoneType' and 'NoneType'",
+    "'NoneType' object is not iterable"
 )
 
 
@@ -162,3 +163,15 @@ class SimplicialComplex:
     def issubcomplex(self, other: SimplicialComplex) -> bool:
         """checks if the complex is a subcomplex of another complex"""
         return self.simplices <= other.simplices
+
+    def k_simplices(self, k: int) -> set:
+        """returns the set of k-simplices in the complex"""
+        return {simplex for simplex in self.simplices if simplex.k == k}
+
+    def boundary(self, k: int) -> set:
+        """returns the boundary of the k-simplices in the complex"""
+        if k > self.k:
+            raise ValueError(f'no {k}-simplices in the complex')
+        elif k <= 0:
+            raise ValueError('k must be greater than 0')
+        return {face for sx in self.k_simplices(k) for face in sx.boundary}
