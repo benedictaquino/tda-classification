@@ -4,13 +4,6 @@ from itertools import combinations, product
 from collections import Counter
 from typing import Generator
 
-NONETYPE_ERROR_MESSAGES = (
-    "unsupported operand type(s) for -: 'NoneType' and 'set'",
-    "unsupported operand type(s) for |=: 'set' and 'NoneType'",
-    "unsupported operand type(s) for |: 'NoneType' and 'NoneType'",
-    "'NoneType' object is not iterable"
-)
-
 
 class Simplex(frozenset):
     """Defines a k-simplex object"""
@@ -18,7 +11,7 @@ class Simplex(frozenset):
 
     def __new__(cls, *points):
         """Simplex takes arguments as points that can make up a k-simplex"""
-        return super().__new__(cls, points)
+        return super().__new__(cls, points) if points else frozenset()
 
     @property
     def points(self) -> frozenset:
@@ -36,16 +29,16 @@ class Simplex(frozenset):
         if self.k:
             combos = combinations(self, self.k)
             return Boundary(Simplex(*combo) for combo in combos)
+        return set()
 
     @property
     def interior(self) -> set:
         """the complement of the boundary"""
-        if self.k:
-            interior = set()
-            for k in range(1, self.k):
-                combos = combinations(self, k)
-                interior |= {Simplex(*combo) for combo in combos}
-            return interior
+        interior = set()
+        for k in range(1, self.k):
+            combos = combinations(self, k)
+            interior |= {Simplex(*combo) for combo in combos}
+        return interior
 
     def __repr__(self):
         return f'{self.k}-simplex: {self.points}'
@@ -57,13 +50,7 @@ class SimplicialComplex(set):
         """adds all faces of simplices passed in to simplicial complex"""
         super().__init__(simplices)
         for simplex in set(simplices):
-            try:
-                self |= simplex.boundary | simplex.interior
-            except TypeError as error_message:
-                if str(error_message) in NONETYPE_ERROR_MESSAGES:
-                    pass
-                else:
-                    raise TypeError(error_message)
+            self |= simplex.boundary | simplex.interior
 
         self.__points = {pt for simplex in simplices for pt in simplex}
         self.__k = max(simplices).k
