@@ -95,7 +95,8 @@ class SimplicialComplex(set):
 
     def closure(self, *simplices) -> SimplicialComplex:
         """return the closure of the subset of simplices in a k-complex"""
-        if not set(simplices).issubset(self):
+        subset = getattr(*simplices, 'issubset', None)
+        if subset and not subset(self) or not set(simplices).issubset(self):
             raise ValueError('not a subset of the complex')
         return SimplicialComplex(*simplices)
 
