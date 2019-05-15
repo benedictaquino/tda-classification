@@ -1,4 +1,4 @@
-"""Topological Feature Selection Functions"""
+"""Topological Feature Selection"""
 from __future__ import annotations
 from itertools import combinations, product
 from collections import Counter
