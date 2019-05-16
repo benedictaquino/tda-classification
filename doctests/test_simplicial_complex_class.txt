@@ -1,0 +1,28 @@
+>>> from tda_utilities.simplicial import Simplex, SimplicialComplex
+>>> v0, e0, f0, t0 = Simplex(0), Simplex(0, 1), Simplex(0, 1, 2), Simplex(0,
+1, 2, 3)
+>>> triangle, tetrahedra = SimplicialComplex(f0), SimplicialComplex(t0)
+>>> e0 in triangle
+True
+>>> t0 in triangle
+False
+>>> triangle < tetrahedra
+True
+>>> triangle >= tetrahedra
+False
+>>> tetrahedra.closure(triangle)
+simplicial 2-complex
+>>> tetrahedra.closure(triangle) == triangle
+True
+>>> tetrahedra.closure(f0)
+simplicial 2-complex
+>>> tetrahedra.closure(f0) == triangle
+True
+>>> tetrahedra.closure(e0)
+simplicial 1-complex
+>>> tetrahedra.closure(v0)
+simplicial 0-complex
+>>> tetra_star = tetrahedra.star(triangle)
+>>> tetra_closed_star = tetrahedra.closure(tetra_star)
+>>> tetra_link == tetra_closed_star - tetra_star
+True

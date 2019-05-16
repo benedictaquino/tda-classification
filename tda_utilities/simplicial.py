@@ -43,6 +43,15 @@ class Simplex(frozenset):
     def __repr__(self):
         return f'{self.k}-simplex: {self.points}'
 
+    def __lt__(self, other):
+        if type(other) is Simplex:
+            if self.k < other.k:
+                return self.k < other.k
+            elif self.k == other.k:
+                return self.points < other.points
+        else:
+            return super().__lt__(other)
+
 
 class SimplicialComplex(set):
     """Defines a simplicial complex"""
@@ -95,15 +104,25 @@ class SimplicialComplex(set):
 
     def closure(self, *simplices) -> SimplicialComplex:
         """return the closure of the subset of simplices in a k-complex"""
-        subset = getattr(*simplices, 'issubset', None)
-        if subset and not subset(self) or not set(simplices).issubset(self):
+        if type(simplices[0]) is SimplicialComplex:
+            if not simplices[0].issubset(self):
+                raise ValueError('not a subset of the complex')
+            return simplices[0]
+        elif type(simplices[0]) is set:
+            simplex_set = simplices[0]
+        else:
+            simplex_set = set(simplices)
+        if not simplex_set.issubset(self):
             raise ValueError('not a subset of the complex')
-        return SimplicialComplex(*simplices)
+        return SimplicialComplex(*simplex_set)
 
     def star(self, *simplices) -> SimplicialComplex:
         """return the star of the set of simplices"""
-        simplex_set = set(simplices)
         star = set()
+        if type(simplices[0]) is SimplicialComplex:
+            simplex_set = simplices[0].simplices
+        else:
+            simplex_set = set(simplices)
         for simplex_1, simplex_2 in product(simplex_set, self):
             if simplex_1 in self.closure(simplex_2):
                 star.add(simplex_2)
@@ -111,14 +130,13 @@ class SimplicialComplex(set):
 
     def link(self, *simplices) -> SimplicialComplex:
         """return the link of the set of simplices"""
-        simplex_set = set(simplices)
+        if type(simplices[0]) is SimplicialComplex:
+            simplex_set = simplices[0].simplices
+        else:
+            simplex_set = set(simplices)
         star = self.star(*simplex_set)
         closed_star = self.closure(*star)
         return closed_star - star
-
-    def issubcomplex(self, other: SimplicialComplex) -> bool:
-        """checks if the complex is a subcomplex of another complex"""
-        return self <= other
 
     def _k_simplices(self, k: int) -> Generator[Simplex, None, None]:
         """returns a generator of k-simplices in the complex"""
