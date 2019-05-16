@@ -142,15 +142,15 @@ class SimplicialComplex(set):
         """returns a generator of k-simplices in the complex"""
         return (simplex for simplex in self if simplex.k == k)
 
-    def k_simplices(self, k: int) -> set:
+    def k_chain(self, k: int) -> set:
         """returns the set of k-simplices in the complex"""
-        return {simplex for simplex in self._k_simplices(k)}
+        return KChain(self._k_simplices(k))
 
     def boundary(self, k: int = None) -> KChain:
         """returns the boundary of the k-simplices in the complex"""
         if k is None:
             return KChain(face for simplex in self._k_simplices(self.k)
-                            for face in simplex.boundary)
+                          for face in simplex.boundary)
         elif k > self.k:
             raise ValueError(f'no {k}-simplices in the complex')
         elif k <= 0:
@@ -161,16 +161,33 @@ class SimplicialComplex(set):
 
 class KChain(set):
     """defines a boundary of a k-simplex or a simplicial k-complex"""
-    __slots__ = ['_KChain__boundary']
+    __slots__ = ['_KChain__boundary', '_KChain__k']
 
     def __init__(self, simplices):
         self.__boundary = 0  # boundary of boundary is 0
         super().__init__(simplices)
+        self.__k = max(self).k
 
     @property
     def boundary(self) -> int:
         """the boundary of a boundary"""
         return self.__boundary
+
+    @property
+    def k(self) -> int:
+        """the dimension of the chain"""
+        return self.__k
+
+    def __add__(self, other) -> KChain:
+        """modulo 2"""
+        if type(other) is not KChain:
+            raise TypeError('k-chain can only be added to another k-chain')
+        elif self.k == other.k:
+            kchain_sum = Counter(self) + Counter(other)
+            mod_2 = {sx for sx, cnt in kchain_sum.items() if cnt % 2}
+        else:
+            raise ValueError('cannot add k-chains of different dimensions')
+        return KChain(mod_2) if mod_2 else 0
 
 
 def boundary(entity, *args, **kwargs) -> KChain:
