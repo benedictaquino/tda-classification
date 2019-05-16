@@ -24,11 +24,11 @@ class Simplex(frozenset):
         return len(self) - 1
 
     @property
-    def boundary(self) -> Boundary:
+    def boundary(self) -> KChain:
         """the union of faces of the simplex"""
         if self.k:
             combos = combinations(self, self.k)
-            return Boundary(Simplex(*combo) for combo in combos)
+            return KChain(Simplex(*combo) for combo in combos)
         return set()
 
     @property
@@ -146,22 +146,22 @@ class SimplicialComplex(set):
         """returns the set of k-simplices in the complex"""
         return {simplex for simplex in self._k_simplices(k)}
 
-    def boundary(self, k: int = None) -> Boundary:
+    def boundary(self, k: int = None) -> KChain:
         """returns the boundary of the k-simplices in the complex"""
         if k is None:
-            return Boundary(face for simplex in self._k_simplices(self.k)
+            return KChain(face for simplex in self._k_simplices(self.k)
                             for face in simplex.boundary)
         elif k > self.k:
             raise ValueError(f'no {k}-simplices in the complex')
         elif k <= 0:
             raise ValueError('k must be greater than 0')
-        return Boundary(face for simplex in self._k_simplices(k)
-                        for face in simplex.boundary)
+        return KChain(face for simplex in self._k_simplices(k)
+                      for face in simplex.boundary)
 
 
-class Boundary(set):
+class KChain(set):
     """defines a boundary of a k-simplex or a simplicial k-complex"""
-    __slots__ = ['_Boundary__boundary']
+    __slots__ = ['_KChain__boundary']
 
     def __init__(self, simplices):
         self.__boundary = 0  # boundary of boundary is 0
@@ -173,7 +173,7 @@ class Boundary(set):
         return self.__boundary
 
 
-def boundary(entity, *args, **kwargs) -> Boundary:
+def boundary(entity, *args, **kwargs) -> KChain:
     """defines the boundary operator"""
     bdry = getattr(entity, 'boundary')
     if callable(bdry):
