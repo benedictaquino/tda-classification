@@ -20,7 +20,7 @@ e5 = Simplex(2, 3)
 f0 = Simplex(0, 1, 2)
 f1 = Simplex(0, 1, 3)
 f2 = Simplex(0, 2, 3)
-f2 = Simplex(1, 2, 3)
+f3 = Simplex(1, 2, 3)
 
 # 4-simplex
 t0 = Simplex(0, 1, 2, 3)
