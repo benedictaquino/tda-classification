@@ -3,6 +3,7 @@ from __future__ import annotations
 from itertools import combinations, product
 from collections import Counter
 from typing import Generator
+from .homology_mod_2 import Chain
 
 
 class Simplex(frozenset):
@@ -24,11 +25,11 @@ class Simplex(frozenset):
         return len(self) - 1
 
     @property
-    def boundary(self) -> KChain:
+    def boundary(self) -> Chain:
         """the union of faces of the simplex"""
         if self.k:
             combos = combinations(self, self.k)
-            return KChain(Simplex(*combo) for combo in combos)
+            return Chain(Simplex(*combo) for combo in combos)
         return set()
 
     @property
@@ -144,55 +145,16 @@ class SimplicialComplex(set):
 
     def k_chain(self, k: int) -> set:
         """returns the set of k-simplices in the complex"""
-        return KChain(self._k_simplices(k))
+        return Chain(self._k_simplices(k))
 
-    def boundary(self, k: int = None) -> KChain:
+    def boundary(self, k: int = None) -> Chain:
         """returns the boundary of the k-simplices in the complex"""
         if k is None:
-            return KChain(face for simplex in self._k_simplices(self.k)
+            return Chain(face for simplex in self._k_simplices(self.k)
                           for face in simplex.boundary)
         elif k > self.k:
             raise ValueError(f'no {k}-simplices in the complex')
         elif k <= 0:
             raise ValueError('k must be greater than 0')
-        return KChain(face for simplex in self._k_simplices(k)
+        return Chain(face for simplex in self._k_simplices(k)
                       for face in simplex.boundary)
-
-
-class KChain(set):
-    """defines a boundary of a k-simplex or a simplicial k-complex"""
-    __slots__ = ['_KChain__boundary', '_KChain__k']
-
-    def __init__(self, simplices):
-        self.__boundary = 0  # boundary of boundary is 0
-        super().__init__(simplices)
-        self.__k = max(self).k
-
-    @property
-    def boundary(self) -> int:
-        """the boundary of a boundary"""
-        return self.__boundary
-
-    @property
-    def k(self) -> int:
-        """the dimension of the chain"""
-        return self.__k
-
-    def __add__(self, other) -> KChain:
-        """modulo 2"""
-        if type(other) is not KChain:
-            raise TypeError('k-chain can only be added to another k-chain')
-        elif self.k == other.k:
-            kchain_sum = Counter(self) + Counter(other)
-            mod_2 = {sx for sx, cnt in kchain_sum.items() if cnt % 2}
-        else:
-            raise ValueError('cannot add k-chains of different dimensions')
-        return KChain(mod_2) if mod_2 else 0
-
-
-def boundary(entity, *args, **kwargs) -> KChain:
-    """defines the boundary operator"""
-    bdry = getattr(entity, 'boundary')
-    if callable(bdry):
-        return bdry(*args, **kwargs)
-    return bdry
